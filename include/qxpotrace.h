@@ -1,11 +1,12 @@
-#ifndef IMAGETRACERPRIV_H
-#define IMAGETRACERPRIV_H
+#ifndef QXPOTRACE_H
+#define QXPOTRACE_H
 
+#include <qxpotrace_global.h>
 #include <QImage>
 #include <QList>
 #include <QPolygonF>
 
-class QxPotrace
+class QXPOTRACE_EXPORT QxPotrace
 {
 public:
   struct Polygon
@@ -35,4 +36,4 @@ private:
   QList<Polygon> m_meshDefs;
 };
 
-#endif // IMAGETRACERPRIV_H
+#endif // QXPOTRACE_H
