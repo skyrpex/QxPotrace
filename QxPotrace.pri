@@ -1,2 +1,2 @@
-INCLUDEPATH += $$PWD/include
-LIBS += -L$$PWD/bin -lQxPotrace
+INCLUDEPATH *= $$PWD/include
+LIBS *= -L$$PWD/bin -lQxPotrace
