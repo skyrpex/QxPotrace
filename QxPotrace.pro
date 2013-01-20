@@ -1,4 +1,4 @@
-﻿QT = core gui
+QT = core gui
 TARGET = QxPotrace
 TEMPLATE = lib
 DESTDIR = $$PWD/bin
