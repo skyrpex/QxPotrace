@@ -1,6 +1,6 @@
 #include "qxpotrace.h"
 #include "bezier.h"
-#include "potrace-1.10/potracelib.h"
+#include "potrace/potracelib.h"
 #include <QDebug>
 #include <QElapsedTimer>
 
