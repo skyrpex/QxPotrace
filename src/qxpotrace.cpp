@@ -3,6 +3,7 @@
 #include "potrace/potracelib.h"
 #include <QDebug>
 #include <QElapsedTimer>
+#include <memory>
 
 #define BM_WORDSIZE ((int)sizeof(potrace_word))
 #define BM_WORDBITS (8*BM_WORDSIZE)
@@ -17,38 +18,38 @@
 #define BM_UPUT(bm, x, y, b) ((b) ? BM_USET(bm, x, y) : BM_UCLR(bm, x, y))
 #define BM_PUT(bm, x, y, b) (bm_safe(bm, x, y) ? BM_UPUT(bm, x, y, b) : 0)
 
-/* return new un-initialized bitmap. NULL with errno on error */
-static potrace_bitmap_t* bm_new(int w, int h)
+class PotraceBitmap
 {
-    potrace_bitmap_t* bm = new potrace_bitmap_t;
-    bm->w = w;
-    bm->h = h;
-    bm->dy = (w + BM_WORDBITS - 1) / BM_WORDBITS;
-    bm->map = new potrace_word[bm->dy * h];
-    if (!bm->map) {
-        delete bm;
-        return NULL;
+public:
+    PotraceBitmap(int width, int height)
+        : bitmap_(new potrace_bitmap_t)
+    {
+        bitmap_->w = width;
+        bitmap_->h = height;
+        bitmap_->dy = (width + BM_WORDBITS - 1) / BM_WORDBITS;
+        map_.resize(bitmap_->dy * height);
+        bitmap_->map = map_.data();
+    }
+    PotraceBitmap(PotraceBitmap&& other) = default;
+    PotraceBitmap(const PotraceBitmap& other) = default;
+
+    potrace_bitmap_t* data() const
+    {
+        return bitmap_.get();
     }
 
-    return bm;
-}
+protected:
+    std::unique_ptr<potrace_bitmap_t> bitmap_;
+    std::vector<potrace_word> map_;
+};
 
-/* free a bitmap */
-static void bm_free(potrace_bitmap_t *bm)
-{
-    if (bm != NULL) {
-        delete[] bm->map;
-    }
-
-    delete bm;
-}
-
-potrace_bitmap_t *bitmapFromImage(const QImage &image, int threshold)
+PotraceBitmap bitmapFromImage(const QImage &image, int threshold)
 {
     // De momento no implementamos que la imagen no tenga alpha channel
     Q_ASSERT(image.hasAlphaChannel());
 
-    potrace_bitmap_t *bitmap = bm_new(image.width(), image.height());
+    // potrace_bitmap_t *bitmap = bm_new(image.width(), image.height());
+    PotraceBitmap bitmap(image.width(), image.height());
     int pi = 0;
     for (int i = 0; i < image.byteCount(); i += 4) {
         int x = pi % image.width();
@@ -59,7 +60,7 @@ potrace_bitmap_t *bitmapFromImage(const QImage &image, int threshold)
         } else {
             p = (image.bits()[i] > threshold)? 0 : 1;
         }
-        BM_PUT(bitmap, x, y, p);
+        BM_PUT(bitmap.data(), x, y, p);
 
         ++pi;
     }
@@ -131,7 +132,6 @@ QxPotrace::Polygon tracedPolygonFromPath(potrace_path_t *path, int bezierPrecisi
     return def;
 }
 
-
 QList<QxPotrace::Polygon> tracedPolygonsFromPath(potrace_path_t *path, int bezierPrecision)
 {
     QList<QxPotrace::Polygon> defs;
@@ -143,8 +143,6 @@ QList<QxPotrace::Polygon> tracedPolygonsFromPath(potrace_path_t *path, int bezie
     }
     return defs;
 }
-
-
 
 QxPotrace::QxPotrace() :
     m_alphaMax(1.0),
@@ -160,7 +158,7 @@ bool QxPotrace::trace(const QImage &image)
     QElapsedTimer timer;
     timer.start();
 
-    potrace_bitmap_t *bitmap = bitmapFromImage(image, m_threshold);
+    PotraceBitmap bitmap = bitmapFromImage(image, m_threshold);
 
     potrace_param_t *params = potrace_param_default();
     params->alphamax = m_alphaMax;
@@ -168,9 +166,8 @@ bool QxPotrace::trace(const QImage &image)
     params->turdsize = m_turdSize;
     //  params->progress.callback = &Tracer::progress;
 
-    potrace_state_t *st = potrace_trace(params, bitmap);
+    potrace_state_t *st = potrace_trace(params, bitmap.data());
 
-    bm_free(bitmap);
     potrace_param_free(params);
 
     if (!st || st->status != POTRACE_STATUS_OK) {
