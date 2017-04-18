@@ -43,6 +43,52 @@ protected:
     std::vector<potrace_word> map_;
 };
 
+class PotraceParameters
+{
+public:
+    PotraceParameters()
+        : params_(potrace_param_default())
+    {
+        //
+    }
+
+    ~PotraceParameters()
+    {
+        potrace_param_free(params_);
+    }
+
+    potrace_param_t* data() const
+    {
+        return params_;
+    }
+
+protected:
+    potrace_param_t* params_;
+}
+
+// class PotraceState
+// {
+// public:
+//     PotraceParameters()
+//         : state_(nullptr)
+//     {
+//         //
+//     }
+//
+//     ~PotraceParameters()
+//     {
+//         potrace_state_free(state_);
+//     }
+//
+//     potrace_state_t* data() const
+//     {
+//         return state_;
+//     }
+//
+// protected:
+//     potrace_state_t* state_;
+// }
+
 PotraceBitmap bitmapFromImage(const QImage &image, int threshold)
 {
     // De momento no implementamos que la imagen no tenga alpha channel
@@ -160,15 +206,13 @@ bool QxPotrace::trace(const QImage &image)
 
     PotraceBitmap bitmap = bitmapFromImage(image, m_threshold);
 
-    potrace_param_t *params = potrace_param_default();
-    params->alphamax = m_alphaMax;
-    params->opttolerance = m_curveTolerance;
-    params->turdsize = m_turdSize;
+    PotraceParameters params;
+    params.data()->alphamax = m_alphaMax;
+    params.data()->opttolerance = m_curveTolerance;
+    params.data()->turdsize = m_turdSize;
     //  params->progress.callback = &Tracer::progress;
 
-    potrace_state_t *st = potrace_trace(params, bitmap.data());
-
-    potrace_param_free(params);
+    potrace_state_t *st = potrace_trace(params.data(), bitmap.data());
 
     if (!st || st->status != POTRACE_STATUS_OK) {
         return false;
