@@ -157,14 +157,16 @@ QPolygonF polygonFromPath(potrace_path_t *path, int bezierPrecision)
 
 QList<QPolygonF> holesFromPath(potrace_path_t *path, int bezierPrecision)
 {
-    QList<QPolygonF> holes;
-    if (!path) return holes;
+    if (!path) {
+        return QList<QPolygonF>();
+    }
 
     path = path->childlist;
     if (!path) {
-        return holes;
+        return QList<QPolygonF>();
     }
 
+    QList<QPolygonF> holes;
     while (path) {
         if (path->sign == '-') {
             holes << polygonFromPath(path, bezierPrecision);
