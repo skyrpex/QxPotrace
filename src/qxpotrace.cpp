@@ -32,6 +32,7 @@ public:
     }
     PotraceBitmap(PotraceBitmap&& other) = default;
     PotraceBitmap(const PotraceBitmap& other) = default;
+    ~PotraceBitmap() = default;
 
     potrace_bitmap_t* data() const
     {
@@ -47,47 +48,50 @@ class PotraceParameters
 {
 public:
     PotraceParameters()
-        : params_(potrace_param_default())
+        : params_(potrace_param_default(), potrace_param_free)
     {
         //
     }
-
-    ~PotraceParameters()
-    {
-        potrace_param_free(params_);
-    }
+    PotraceParameters(PotraceParameters&& other) = default;
+    PotraceParameters(const PotraceParameters& other) = default;
+    ~PotraceParameters() = default;
 
     potrace_param_t* data() const
     {
-        return params_;
+        return params_.get();
     }
 
 protected:
-    potrace_param_t* params_;
-}
+    std::unique_ptr<potrace_param_t, decltype(&potrace_param_free)> params_;
+};
 
-// class PotraceState
-// {
-// public:
-//     PotraceParameters()
-//         : state_(nullptr)
-//     {
-//         //
-//     }
-//
-//     ~PotraceParameters()
-//     {
-//         potrace_state_free(state_);
-//     }
-//
-//     potrace_state_t* data() const
-//     {
-//         return state_;
-//     }
-//
-// protected:
-//     potrace_state_t* state_;
-// }
+class PotraceState
+{
+public:
+    PotraceState(potrace_state_t* state)
+        : state_(state, potrace_state_free)
+    {
+        //
+    }
+    PotraceState(PotraceState&& other) = default;
+    PotraceState(const PotraceState& other) = default;
+    ~PotraceState() = default;
+
+    static PotraceState trace(const PotraceParameters& parameters, const PotraceBitmap& bitmap)
+    {
+        return PotraceState(
+            potrace_trace(parameters.data(), bitmap.data())
+        );
+    }
+
+    potrace_state_t* data() const
+    {
+        return state_.get();
+    }
+
+protected:
+    std::unique_ptr<potrace_state_t, decltype(&potrace_state_free)> state_;
+};
 
 PotraceBitmap bitmapFromImage(const QImage &image, int threshold)
 {
@@ -212,15 +216,14 @@ bool QxPotrace::trace(const QImage &image)
     params.data()->turdsize = m_turdSize;
     //  params->progress.callback = &Tracer::progress;
 
-    potrace_state_t *st = potrace_trace(params.data(), bitmap.data());
+    PotraceState state = PotraceState::trace(params, bitmap);
 
-    if (!st || st->status != POTRACE_STATUS_OK) {
+    if (!state.data() || state.data()->status != POTRACE_STATUS_OK) {
         return false;
     }
 
-    m_meshDefs = tracedPolygonsFromPath(st->plist, m_bezierPrecision);
+    m_meshDefs = tracedPolygonsFromPath(state.data()->plist, m_bezierPrecision);
 
-    potrace_state_free(st);
     return true;
 }
 
