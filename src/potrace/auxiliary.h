@@ -1,4 +1,4 @@
-/* Copyright (C) 2001-2013 Peter Selinger.
+/* Copyright (C) 2001-2017 Peter Selinger.
    This file is part of Potrace. It is free software and it is covered
    by the GNU General Public License. See the file COPYING for details. */
 
@@ -9,8 +9,10 @@
 #define AUXILIARY_H
 
 #ifdef HAVE_CONFIG_H
-#include "config.h"
+#include <config.h>
 #endif
+
+#include <stdlib.h>
 
 /* ---------------------------------------------------------------------- */
 /* point arithmetic */

@@ -36,5 +36,5 @@ INCLUDEPATH += $$PWD/include
 
 DEFINES += POTRACE=\"\\\"potrace\\\"\"
 DEFINES += MKBITMAP=\"\\\"mkbitmap\\\"\"
-DEFINES += VERSION=\"\\\"1.10\\\"\"
+DEFINES += VERSION=\"\\\"1.14\\\"\"
 DEFINES += PACKAGE=\"\\\"potrace\\\"\"

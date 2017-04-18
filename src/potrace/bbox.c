@@ -1,8 +1,12 @@
-/* Copyright (C) 2001-2013 Peter Selinger.
+/* Copyright (C) 2001-2017 Peter Selinger.
    This file is part of Potrace. It is free software and it is covered
    by the GNU General Public License. See the file COPYING for details. */
 
 /* figure out the true bounding box of a vector image */
+
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
 
 #include <math.h>
 #include <stdlib.h>
