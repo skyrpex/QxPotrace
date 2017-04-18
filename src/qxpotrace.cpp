@@ -18,24 +18,18 @@
 #define BM_PUT(bm, x, y, b) (bm_safe(bm, x, y) ? BM_UPUT(bm, x, y, b) : 0)
 
 /* return new un-initialized bitmap. NULL with errno on error */
-static potrace_bitmap_t *bm_new(int w, int h)
+static potrace_bitmap_t* bm_new(int w, int h)
 {
-    potrace_bitmap_t *bm;
-    int dy = (w + BM_WORDBITS - 1) / BM_WORDBITS;
-
-    bm = (potrace_bitmap_t *) malloc(sizeof(potrace_bitmap_t));
-    if (!bm) {
-        return NULL;
-    }
+    potrace_bitmap_t* bm = new potrace_bitmap_t;
     bm->w = w;
     bm->h = h;
-    bm->dy = dy;
-    //  fprintf(stdout, "%d", dy * h * BM_WORDSIZE);
-    bm->map = (potrace_word *) malloc(dy * h * BM_WORDSIZE);
+    bm->dy = (w + BM_WORDBITS - 1) / BM_WORDBITS;
+    bm->map = new potrace_word[bm->dy * h];
     if (!bm->map) {
-        free(bm);
+        delete bm;
         return NULL;
     }
+
     return bm;
 }
 
@@ -43,12 +37,11 @@ static potrace_bitmap_t *bm_new(int w, int h)
 static void bm_free(potrace_bitmap_t *bm)
 {
     if (bm != NULL) {
-        free(bm->map);
+        delete[] bm->map;
     }
-    free(bm);
+
+    delete bm;
 }
-
-
 
 potrace_bitmap_t *bitmapFromImage(const QImage &image, int threshold)
 {
@@ -87,21 +80,17 @@ QPolygonF polygonFromPath(potrace_path_t *path, int bezierPrecision)
     for (int i = 0; i < n; ++i) {
         switch (tag[i]) {
             case POTRACE_CORNER: {
-                poly << QPointF(c[i][1].x, c[i][1].y)
-                << QPointF(c[i][2].x, c[i][2].y);
+                poly << QPointF(c[i][1].x, c[i][1].y) << QPointF(c[i][2].x, c[i][2].y);
             }
             break;
 
             case POTRACE_CURVETO: {
-                QPointF pa, pb, pc, pd;
-                pa = poly.isEmpty()? QPointF(c[n-1][2].x, c[n-1][2].y) :
-                poly.last();
-                pb = QPointF(c[i][0].x, c[i][0].y);
-                pc = QPointF(c[i][1].x, c[i][1].y);
-                pd = QPointF(c[i][2].x, c[i][2].y);
-                for (int i = 1; i <= bezierPrecision; ++i)
-                {
-                    poly << bezier(pa, pb, pc, pd, static_cast<qreal>(i)/bezierPrecision);
+                QPointF pa = poly.isEmpty() ? QPointF(c[n-1][2].x, c[n-1][2].y) : poly.last();
+                QPointF pb = QPointF(c[i][0].x, c[i][0].y);
+                QPointF pc = QPointF(c[i][1].x, c[i][1].y);
+                QPointF pd = QPointF(c[i][2].x, c[i][2].y);
+                for (int i = 1; i <= bezierPrecision; ++i) {
+                    poly << bezier(pa, pb, pc, pd, static_cast<qreal>(i) / bezierPrecision);
                 }
             }
             break;
@@ -158,11 +147,11 @@ QList<QxPotrace::Polygon> tracedPolygonsFromPath(potrace_path_t *path, int bezie
 
 
 QxPotrace::QxPotrace() :
-m_alphaMax(1.0),
-m_turdSize(2),
-m_curveTolerance(0.2),
-m_threshold(0),
-m_bezierPrecision(4)
+    m_alphaMax(1.0),
+    m_turdSize(2),
+    m_curveTolerance(0.2),
+    m_threshold(0),
+    m_bezierPrecision(4)
 {
 }
 
